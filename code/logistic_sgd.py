@@ -375,17 +375,14 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
-
             minibatch_avg_cost = train_model(minibatch_index)
-            # iteration number
-            iter = (epoch - 1) * n_train_batches + minibatch_index
 
-            if (iter + 1) % validation_frequency == 0:
-                # compute zero-one loss on validation set
-                validation_losses = [validate_model(i)
-                                     for i in range(n_valid_batches)]
-                this_validation_loss = numpy.mean(validation_losses)
+            validation_losses = [validate_model(i)
+                                 for i in range(n_valid_batches)]
+            this_validation_loss = numpy.mean(validation_losses)
 
+            if (this_validation_loss < best_validation_loss):
+                best_validation_loss = this_validation_loss
                 print(
                     'epoch %i, minibatch %i/%i, validation error %f %%' %
                     (
@@ -396,40 +393,8 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                     )
                 )
 
-                # if we got the best validation score until now
-                if this_validation_loss < best_validation_loss:
-                    #improve patience if loss improvement is good enough
-                    if this_validation_loss < best_validation_loss *  \
-                       improvement_threshold:
-                        patience = max(patience, iter * patience_increase)
-
-                    best_validation_loss = this_validation_loss
-                    # test it on the test set
-
-                    test_losses = [test_model(i)
-                                   for i in range(n_test_batches)]
-                    test_score = numpy.mean(test_losses)
-
-                    print(
-                        (
-                            '     epoch %i, minibatch %i/%i, test error of'
-                            ' best model %f %%'
-                        ) %
-                        (
-                            epoch,
-                            minibatch_index + 1,
-                            n_train_batches,
-                            test_score * 100.
-                        )
-                    )
-
-                    # save the best model
-                    with open('best_model.pkl', 'wb') as f:
-                        pickle.dump(classifier, f)
-
-            if patience <= iter:
+            if this_validation_loss < 0.075:
                 done_looping = True
-                break
 
     end_time = timeit.default_timer()
     print(
